@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>MovMuriaé — A cidade em movimento</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --red:#FF3B30;--yellow:#FFCC00;--green:#34C759;--blue:#007AFF;
+  --bg:#0A0A0A;--card:#161618;--card2:#222224;--card3:#2C2C2E;
+  --text:#F5F5F5;--sub:rgba(245,245,245,0.45);--sub2:rgba(245,245,245,0.2);
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --nav-h:60px;--bottom-h:66px;
+  --grad:linear-gradient(90deg,#FF3B30 0%,#FFCC00 50%,#34C759 100%);
+}
+[data-theme="light"]{
+  --bg:#F7F7F7;--card:#FFF;--card2:#F0F0F2;--card3:#E5E5EA;
+  --text:#0A0A0A;--sub:rgba(0,0,0,0.45);--sub2:rgba(0,0,0,0.18);
+  --border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.13);
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;min-height:100vh;transition:background .3s,color .3s}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--card3);border-radius:2px}
+svg.ic{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* ── LOGIN ── */
+.login-screen{position:fixed;inset:0;z-index:500;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1.5rem;overflow-y:auto;transition:opacity .35s,transform .35s}
+.login-screen.out{opacity:0;transform:translateY(-14px);pointer-events:none}
+.ls-logo{width:72px;height:72px;border-radius:20px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;color:#fff;box-shadow:0 0 40px rgba(255,59,48,.28);margin-bottom:.9rem}
+.ls-brand{font-family:'Syne',sans-serif;font-size:1.75rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.2rem}
+.ls-brand span{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.ls-slogan{font-size:.78rem;color:var(--sub);margin-bottom:2rem;text-align:center}
+.auth-box{width:100%;max-width:360px}
+.auth-tabs{display:flex;background:var(--card2);border-radius:12px;padding:3px;gap:3px;margin-bottom:1.4rem}
+.ltab{flex:1;padding:.52rem;border:none;border-radius:9px;background:none;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;color:var(--sub);cursor:pointer;transition:all .2s}
+.ltab.active{background:var(--red);color:#fff}
+.inp-group{margin-bottom:.82rem}
+.inp-label{display:block;font-size:.68rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--sub);margin-bottom:.36rem}
+.inp-wrap{position:relative}
+.finput{width:100%;padding:.82rem 2.5rem;background:var(--card);border:1.5px solid var(--border2);border-radius:11px;font-family:'DM Sans',sans-serif;font-size:.87rem;color:var(--text);outline:none;transition:border-color .2s,background .2s}
+.finput:focus{border-color:var(--red);background:var(--card2)}
+.finput.err-s{border-color:var(--red)!important;background:rgba(255,59,48,.05)!important}
+.finput.ok-s{border-color:var(--green)}
+.finput::placeholder{color:var(--sub2)}
+.il{position:absolute;left:.82rem;top:50%;transform:translateY(-50%);color:var(--sub);pointer-events:none}
+.il svg{width:15px;height:15px}
+.ir{position:absolute;right:.82rem;top:50%;transform:translateY(-50%);font-size:.78rem;opacity:0;transition:opacity .2s}
+.ir.show{opacity:1}
+.vm{font-size:.71rem;margin-top:.3rem;display:flex;align-items:flex-start;gap:.32rem;opacity:0;transform:translateY(-3px);transition:opacity .2s,transform .2s;min-height:.9rem;line-height:1.4}
+.vm.show{opacity:1;transform:translateY(0)}
+.vm.e{color:var(--red)}.vm.w{color:var(--yellow)}.vm.s{color:var(--green)}
+.vd{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0;margin-top:.22rem}
+.str-wrap{margin-top:.42rem;display:none}.str-wrap.show{display:block}
+.str-bar{height:3px;background:var(--card3);border-radius:2px;overflow:hidden;margin-bottom:.26rem}
+.str-fill{height:100%;border-radius:2px;transition:width .3s,background .3s;width:0}
+.str-lbl{font-size:.67rem;color:var(--sub)}
+.btn-main{width:100%;padding:.88rem;background:var(--red);color:#fff;border:none;border-radius:11px;font-family:'DM Sans',sans-serif;font-size:.87rem;font-weight:600;cursor:pointer;transition:opacity .2s,transform .1s;display:flex;align-items:center;justify-content:center;gap:.5rem;margin-top:.25rem}
+.btn-main:hover{opacity:.9}.btn-main:active{transform:scale(.98)}.btn-main:disabled{opacity:.45;cursor:not-allowed}
+.btn-skip{width:100%;padding:.62rem;background:none;border:1.5px solid var(--border2);border-radius:11px;font-family:'DM Sans',sans-serif;font-size:.79rem;color:var(--sub);cursor:pointer;margin-top:.55rem;transition:border-color .2s,color .2s}
+.btn-skip:hover{border-color:var(--sub);color:var(--text)}
+.auth-footer{margin-top:1.2rem;text-align:center;font-size:.75rem;color:var(--sub)}
+.auth-footer a{color:var(--red);cursor:pointer;font-weight:600}
+.spinner{width:15px;height:15px;border:2px solid rgba(255,255,255,.28);border-top-color:#fff;border-radius:50%;animation:spin .65s linear infinite;display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── NAV ── */
+.topnav{position:fixed;top:0;left:0;right:0;height:var(--nav-h);z-index:100;background:rgba(10,10,10,.94);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 1.1rem;transition:background .3s}
+[data-theme="light"] .topnav{background:rgba(247,247,247,.94)}
+.nav-logo{display:flex;align-items:center;gap:.5rem;text-decoration:none}
+.logo-chip{width:31px;height:31px;border-radius:9px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:.95rem;color:#fff}
+.logo-name{font-family:'Syne',sans-serif;font-weight:700;font-size:.93rem;color:var(--text)}
+.logo-name span{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-r{display:flex;align-items:center;gap:.3rem}
+.nav-btn{width:35px;height:35px;border-radius:50%;background:var(--card);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--sub);transition:background .2s,color .2s;position:relative}
+.nav-btn:hover{background:var(--card2);color:var(--text)}
+.nav-btn svg{width:16px;height:16px}
+.notif-pip::after{content:'';position:absolute;top:6px;right:6px;width:7px;height:7px;background:var(--red);border-radius:50%;border:2px solid var(--bg)}
+.bottomnav{position:fixed;bottom:0;left:0;right:0;height:var(--bottom-h);z-index:100;background:rgba(10,10,10,.96);backdrop-filter:blur(24px);border-top:1px solid var(--border);display:flex;align-items:center;transition:background .3s}
+[data-theme="light"] .bottomnav{background:rgba(247,247,247,.96)}
+.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:none;cursor:pointer;padding:.42rem 0;color:var(--sub);transition:color .2s}
+.tab-btn.active{color:var(--red)}.tab-btn.active svg{filter:drop-shadow(0 0 5px rgba(255,59,48,.5))}
+.tab-btn svg{width:19px;height:19px}
+.tab-lbl{font-size:.57rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em}
+
+/* ── MAIN ── */
+.main{padding-top:calc(var(--nav-h) + .5rem);padding-bottom:calc(var(--bottom-h) + 1rem);min-height:100vh}
+.screen{display:none;animation:fadeUp .24s ease}
+.screen.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── FEED HERO ── */
+.feed-hero{padding:1rem 1rem .85rem;background:linear-gradient(155deg,rgba(255,59,48,.11),rgba(255,204,0,.05) 55%,rgba(52,199,89,.07));border-radius:0 0 16px 16px;margin-bottom:.55rem}
+.hero-greet{font-size:.76rem;color:var(--sub);margin-bottom:.12rem}
+.hero-city{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;letter-spacing:-.02em}
+.hero-city b{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero-sub{font-size:.71rem;color:var(--sub);margin-top:.12rem}
+.status-row{display:flex;gap:.4rem;margin-top:.85rem;flex-wrap:wrap}
+.chip{display:flex;align-items:center;gap:.32rem;background:var(--card);padding:.28rem .65rem;border-radius:20px;font-size:.67rem;font-weight:600;border:1px solid var(--border2)}
+.pip{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.pip-r{background:var(--red);animation:blink 1.5s infinite}
+.pip-y{background:var(--yellow);animation:blink 1.5s .4s infinite}
+.pip-g{background:var(--green)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.22}}
+
+/* ── FILTER ── */
+.filter-row{display:flex;gap:.38rem;overflow-x:auto;padding:.1rem 1rem .65rem;scrollbar-width:none}
+.filter-row::-webkit-scrollbar{display:none}
+.ftab{flex-shrink:0;padding:.35rem .85rem;background:var(--card);border:1.5px solid var(--border2);border-radius:20px;font-family:'DM Sans',sans-serif;font-size:.69rem;font-weight:600;color:var(--sub);cursor:pointer;transition:all .2s;white-space:nowrap}
+.ftab.active{background:var(--red);border-color:var(--red);color:#fff}
+
+/* ── POST CARDS ── */
+.post-card{background:var(--card);border-radius:14px;margin:0 1rem .75rem;border:1px solid var(--border);overflow:hidden;transition:transform .15s}
+.post-card:active{transform:scale(.995)}
+.post-head{display:flex;align-items:center;gap:.6rem;padding:.82rem 1rem .45rem}
+.post-av{width:36px;height:36px;border-radius:50%;flex-shrink:0;background:var(--grad);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:.85rem;color:#fff;overflow:hidden;cursor:pointer}
+.post-av img{width:100%;height:100%;object-fit:cover}
+.post-meta{flex:1;min-width:0}
+.post-user{font-size:.8rem;font-weight:600;cursor:pointer}
+.post-user:hover{color:var(--red)}
+.post-loc{font-size:.67rem;color:var(--sub);margin-top:.04rem}
+.p-badge{padding:.18rem .58rem;border-radius:20px;font-size:.6rem;font-weight:700;letter-spacing:.03em;flex-shrink:0}
+.pb-t{background:rgba(255,204,0,.12);color:var(--yellow)}
+.pb-d{background:rgba(255,59,48,.12);color:var(--red)}
+.pb-s{background:rgba(52,199,89,.12);color:var(--green)}
+.pb-r{background:rgba(120,120,240,.12);color:#8888f0}
+.post-body{padding:.12rem 1rem .65rem}
+.post-text{font-size:.83rem;line-height:1.58}
+/* security warning on role posts */
+.role-warning{margin:.1rem 1rem .7rem;padding:.6rem .8rem;background:rgba(255,204,0,.08);border:1px solid rgba(255,204,0,.2);border-radius:9px;display:flex;align-items:flex-start;gap:.5rem}
+.rw-icon svg{width:14px;height:14px;stroke:var(--yellow);flex-shrink:0;margin-top:.1rem}
+.rw-text{font-size:.69rem;color:var(--yellow);line-height:1.5}
+.post-time{font-size:.63rem;color:var(--sub2);padding:0 1rem .65rem}
+.post-actions{display:flex;border-top:1px solid var(--border)}
+.p-act{flex:1;display:flex;align-items:center;justify-content:center;gap:.32rem;padding:.52rem .25rem;background:none;border:none;border-right:1px solid var(--border);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.68rem;color:var(--sub);transition:background .15s,color .15s}
+.p-act:last-child{border-right:none}.p-act:hover{background:var(--card2);color:var(--text)}
+.p-act svg{width:13px;height:13px}.p-act.liked{color:var(--red)}.p-act.confirmed{color:var(--green)}
+
+/* ── NEW USER BADGE ── */
+.new-badge{display:inline-flex;align-items:center;gap:.3rem;padding:.15rem .5rem;background:rgba(255,59,48,.12);border:1px solid rgba(255,59,48,.25);border-radius:20px;font-size:.6rem;color:var(--red);font-weight:600;margin-left:.4rem;vertical-align:middle}
+
+/* ── REPUTATION STARS ── */
+.rep-stars{display:inline-flex;gap:1px;margin-left:.3rem;vertical-align:middle}
+.rep-stars svg{width:11px;height:11px}
+
+/* ── FAB ── */
+.fab{position:fixed;bottom:calc(var(--bottom-h) + .95rem);right:1.1rem;width:48px;height:48px;border-radius:50%;background:var(--red);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;z-index:90;box-shadow:0 4px 18px rgba(255,59,48,.42);transition:transform .2s}
+.fab:hover{transform:scale(1.08)}.fab:active{transform:scale(.95)}
+.fab svg{width:21px;height:21px;stroke:#fff;stroke-width:2.2;fill:none;stroke-linecap:round}
+
+/* ── SOS BUTTON ── */
+.sos-btn{position:fixed;bottom:calc(var(--bottom-h) + .95rem);left:1.1rem;z-index:90;width:48px;height:48px;border-radius:50%;background:#FF1744;border:3px solid rgba(255,23,68,.3);cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:.72rem;letter-spacing:.02em;box-shadow:0 0 0 0 rgba(255,23,68,.4);animation:sosPulse 2s infinite}
+@keyframes sosPulse{0%{box-shadow:0 0 0 0 rgba(255,23,68,.4)}70%{box-shadow:0 0 0 14px rgba(255,23,68,0)}100%{box-shadow:0 0 0 0 rgba(255,23,68,0)}}
+
+/* ── MAP ── */
+.map-container{margin:.65rem 1rem;border-radius:18px;overflow:hidden;background:#111418;border:1px solid var(--border2);box-shadow:0 4px 24px rgba(0,0,0,.45)}
+[data-theme="light"] .map-container{background:#dde3eb}
+#mapLeaflet{height:320px;width:100%;z-index:1}
+.leaflet-container{background:#111418!important;font-family:'DM Sans',sans-serif}
+[data-theme="light"] .leaflet-container{background:#dde3eb!important}
+.leaflet-control-zoom,.leaflet-control-attribution{display:none!important}
+.map-popup{background:var(--bg);border:1px solid var(--border2);border-radius:11px;padding:.75rem .95rem;min-width:175px;box-shadow:0 8px 28px rgba(0,0,0,.5)}
+.mp-title{font-family:'Syne',sans-serif;font-size:.87rem;font-weight:700;margin-bottom:.18rem;color:var(--text)}
+.mp-sub{font-size:.7rem;color:var(--sub)}
+.mp-badge{display:inline-block;margin-top:.4rem;padding:.18rem .55rem;border-radius:20px;font-size:.6rem;font-weight:700}
+.leaflet-popup-content-wrapper{background:transparent!important;border:none!important;box-shadow:none!important;padding:0!important;border-radius:0!important}
+.leaflet-popup-content{margin:0!important;line-height:1!important}
+.leaflet-popup-tip-container{display:none!important}
+.map-filters{display:flex;gap:.38rem;overflow-x:auto;padding:.48rem 1rem .28rem;scrollbar-width:none}
+.map-filters::-webkit-scrollbar{display:none}
+.mft{flex-shrink:0;padding:.32rem .78rem;background:var(--card);border:1.5px solid var(--border2);border-radius:20px;font-size:.67rem;font-weight:600;color:var(--sub);cursor:pointer;transition:all .2s;white-space:nowrap}
+.mft.on-r{color:var(--red);border-color:var(--red);background:rgba(255,59,48,.1)}
+.mft.on-y{color:var(--yellow);border-color:var(--yellow);background:rgba(255,204,0,.1)}
+.mft.on-g{color:var(--green);border-color:var(--green);background:rgba(52,199,89,.1)}
+
+/* ── SECTION ── */
+.sec-pad{padding:.85rem 1rem 0}
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem}
+.sec-title{font-family:'Syne',sans-serif;font-size:.98rem;font-weight:700}
+.sec-link{font-size:.71rem;color:var(--red);font-weight:600;background:none;border:none;cursor:pointer}
+.rank-card{background:var(--card);border-radius:13px;margin:0 1rem .58rem;padding:.78rem 1rem;border:1px solid var(--border);display:flex;align-items:center;gap:.78rem}
+.rank-n{font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;color:var(--sub2);width:20px;text-align:center;flex-shrink:0}
+.rank-n.t{color:var(--red)}
+.rank-info{flex:1}.rank-name{font-size:.82rem;font-weight:600}.rank-det{font-size:.67rem;color:var(--sub);margin-top:.08rem}
+.rlvl{padding:.17rem .52rem;border-radius:20px;font-size:.59rem;font-weight:700}
+.rl-a{background:rgba(255,59,48,.12);color:var(--red)}.rl-m{background:rgba(255,204,0,.12);color:var(--yellow)}.rl-b{background:rgba(52,199,89,.12);color:var(--green)}
+
+/* ── SEGURANÇA ── */
+.seg-banner{margin:.65rem 1rem;padding:1.1rem;background:linear-gradient(135deg,rgba(255,59,48,.17),rgba(255,59,48,.04));border-radius:14px;border:1px solid rgba(255,59,48,.18)}
+.seg-title{font-family:'Syne',sans-serif;font-size:.93rem;font-weight:700}
+.seg-sub{font-size:.74rem;color:var(--sub);margin-top:.22rem;line-height:1.55}
+.seg-btn{display:inline-flex;align-items:center;gap:.38rem;margin-top:.75rem;padding:.48rem .95rem;background:var(--red);border:none;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:600;color:#fff;cursor:pointer}
+.seg-btn svg{width:13px;height:13px;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round}
+.area-card{background:var(--card);border-radius:13px;margin:0 1rem .62rem;padding:.88rem 1rem;border:1px solid var(--border)}
+.area-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.38rem}
+.area-name{font-size:.84rem;font-weight:600}.area-meta{font-size:.68rem;color:var(--sub);line-height:1.5}
+.area-bar-wrap{height:3px;background:var(--card3);border-radius:2px;margin-top:.62rem;overflow:hidden}
+.area-bar{height:100%;border-radius:2px;transition:width .6s}
+
+/* ── ROLÊ ── */
+.role-card{background:var(--card);border-radius:14px;margin:0 1rem .72rem;padding:.95rem 1rem;border:1px solid var(--border)}
+.role-type-tag{padding:.18rem .58rem;border-radius:20px;font-size:.59rem;font-weight:700;background:rgba(120,120,240,.12);color:#8888f0}
+.role-title{font-family:'Syne',sans-serif;font-size:.96rem;font-weight:700;margin:.45rem 0 .38rem}
+.role-metas{display:flex;flex-wrap:wrap;gap:.42rem;margin-bottom:.65rem}
+.role-meta{font-size:.69rem;color:var(--sub);display:flex;align-items:center;gap:.24rem}
+.role-meta svg{width:11px;height:11px}
+.role-sec-warn{background:rgba(255,204,0,.07);border:1px solid rgba(255,204,0,.2);border-radius:9px;padding:.7rem .85rem;margin-bottom:.7rem;font-size:.71rem;color:var(--yellow);line-height:1.55}
+.role-sec-warn strong{display:block;margin-bottom:.2rem;font-size:.75rem}
+.role-acts{display:flex;gap:.48rem}
+.btn-wpp{flex:1;padding:.62rem;background:#1aad3f;border:none;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:600;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.32rem}
+.btn-int{flex:1;padding:.62rem;background:var(--card2);border:none;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:600;color:var(--text);cursor:pointer}
+.role-author{display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem}
+.role-author-info{display:flex;align-items:center;gap:.5rem}
+.role-av{width:30px;height:30px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:.78rem;font-weight:800;color:#fff;overflow:hidden}
+.role-av img{width:100%;height:100%;object-fit:cover}
+.role-user-name{font-size:.8rem;font-weight:600}
+.role-rep-tag{font-size:.63rem;color:var(--sub)}
+
+/* ── PROFILE ── */
+.profile-hero{background:linear-gradient(180deg,rgba(255,59,48,.11),transparent);padding:1.3rem 1rem .95rem;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative}
+.prof-av-wrap{position:relative;margin-bottom:.65rem;cursor:pointer}
+.prof-av{width:78px;height:78px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:1.8rem;color:#fff;border:3px solid var(--border2);box-shadow:0 0 0 4px rgba(255,59,48,.1);overflow:hidden}
+.prof-av img{width:100%;height:100%;object-fit:cover}
+.prof-av-edit{position:absolute;bottom:0;right:0;width:24px;height:24px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg)}
+.prof-av-edit svg{width:11px;height:11px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.prof-name{font-family:'Syne',sans-serif;font-size:1.18rem;font-weight:800}
+.prof-user{font-size:.77rem;color:var(--sub);margin-top:.13rem}
+.prof-rep{display:flex;align-items:center;gap:.32rem;margin-top:.65rem;background:var(--card);padding:.32rem .85rem;border-radius:20px;font-size:.74rem;font-weight:600;border:1px solid var(--border2)}
+.rep-ic svg{width:12px;height:12px;stroke:var(--yellow);fill:var(--yellow);stroke-width:1}
+/* verification badges */
+.prof-badges{display:flex;gap:.4rem;margin-top:.55rem;flex-wrap:wrap;justify-content:center}
+.vbadge{display:flex;align-items:center;gap:.25rem;padding:.18rem .55rem;border-radius:20px;font-size:.62rem;font-weight:600}
+.vb-email{background:rgba(0,122,255,.12);color:#007AFF}
+.vb-phone{background:rgba(52,199,89,.12);color:var(--green)}
+.vb-new{background:rgba(255,59,48,.12);color:var(--red)}
+.vbadge svg{width:10px;height:10px}
+.prof-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.55rem;margin:.85rem 1rem .5rem}
+.stat-box{background:var(--card);border-radius:13px;padding:.78rem .5rem;text-align:center;border:1px solid var(--border)}
+.stat-n{font-family:'Syne',sans-serif;font-size:1.25rem;font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-l{font-size:.61rem;color:var(--sub);margin-top:.13rem;text-transform:uppercase;letter-spacing:.06em}
+/* settings */
+.settings{margin:0 1rem}
+.set-item{display:flex;align-items:center;justify-content:space-between;padding:.88rem 0;border-bottom:1px solid var(--border);cursor:pointer}
+.set-item:last-child{border:none}
+.set-l{display:flex;align-items:center;gap:.72rem}
+.set-ic{width:33px;height:33px;border-radius:9px;background:var(--card);display:flex;align-items:center;justify-content:center;color:var(--sub)}
+.set-ic svg{width:15px;height:15px}
+.set-nm{font-size:.83rem;font-weight:500}
+.set-arr svg{width:13px;height:13px;fill:none;stroke:var(--sub2);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tgl-input{display:none}
+.tgl-label{display:block;width:41px;height:23px;background:var(--card3);border-radius:12px;cursor:pointer;position:relative;transition:background .2s}
+.tgl-label::after{content:'';position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.tgl-input:checked+.tgl-label{background:var(--green)}.tgl-input:checked+.tgl-label::after{transform:translateX(18px)}
+
+/* ── MODALS / SHEETS ── */
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:300;display:none;align-items:flex-end;backdrop-filter:blur(4px)}
+.backdrop.open{display:flex}
+.backdrop.center{align-items:center;justify-content:center;padding:1rem}
+.sheet{background:var(--bg);width:100%;border-radius:20px 20px 0 0;padding:0 1.1rem 2rem;border-top:1px solid var(--border2);animation:slideUp .28s cubic-bezier(.25,.46,.45,.94);max-height:88vh;overflow-y:auto}
+.modal-box{background:var(--card);border-radius:18px;width:100%;max-width:360px;padding:1.5rem;animation:popIn .22s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes popIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+.sheet-handle{width:35px;height:3.5px;background:var(--card3);border-radius:2px;margin:.72rem auto 1rem}
+.sheet-title{font-family:'Syne',sans-serif;font-size:1.02rem;font-weight:700;margin-bottom:.85rem}
+.modal-title{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:700;margin-bottom:.5rem}
+.modal-sub{font-size:.8rem;color:var(--sub);line-height:1.55;margin-bottom:1.2rem}
+.modal-actions{display:flex;gap:.6rem;margin-top:1rem}
+.btn-outline{flex:1;padding:.75rem;background:none;border:1.5px solid var(--border2);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;color:var(--text);cursor:pointer;transition:background .2s}
+.btn-outline:hover{background:var(--card2)}
+.btn-confirm{flex:1;padding:.75rem;background:var(--red);border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;color:#fff;cursor:pointer}
+.btn-green{background:var(--green)!important}
+.btn-blue{background:var(--blue)!important}
+/* settings panel */
+.settings-panel{padding:1rem 0}
+.sp-item{display:flex;align-items:center;justify-content:space-between;padding:.8rem 0;border-bottom:1px solid var(--border)}
+.sp-item:last-child{border:none}
+.sp-l{display:flex;align-items:center;gap:.65rem}
+.sp-ic{width:32px;height:32px;border-radius:9px;background:var(--card2);display:flex;align-items:center;justify-content:center;color:var(--sub)}
+.sp-ic svg{width:14px;height:14px}
+.sp-nm{font-size:.82rem;font-weight:500}
+.sp-desc{font-size:.68rem;color:var(--sub);margin-top:.08rem}
+/* privacy terms */
+.privacy-section{margin-bottom:1.2rem}
+.privacy-section h3{font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;margin-bottom:.4rem;color:var(--text)}
+.privacy-section p{font-size:.78rem;color:var(--sub);line-height:1.7}
+/* post type */
+.type-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.52rem;margin-bottom:.85rem}
+.type-btn{padding:.68rem;background:var(--card);border:1.5px solid var(--border2);border-radius:11px;cursor:pointer;text-align:left;font-family:'DM Sans',sans-serif;color:var(--sub);transition:all .2s;display:flex;align-items:center;gap:.58rem}
+.type-btn.sel{border-color:var(--red);color:var(--text);background:rgba(255,59,48,.07)}
+.type-ico{width:30px;height:30px;border-radius:8px;background:var(--card2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.type-ico svg{width:15px;height:15px}
+.type-name{font-size:.76rem;font-weight:600}
+.post-textarea{width:100%;min-height:88px;background:var(--card);border:1.5px solid var(--border2);border-radius:11px;padding:.82rem;font-family:'DM Sans',sans-serif;font-size:.84rem;color:var(--text);outline:none;resize:none;transition:border-color .2s;margin-bottom:.65rem}
+.post-textarea:focus{border-color:var(--red)}.post-textarea::placeholder{color:var(--sub2)}
+.loc-wrap{position:relative;margin-bottom:.75rem}
+.loc-ico{position:absolute;left:.8rem;top:50%;transform:translateY(-50%);color:var(--sub)}
+.loc-ico svg{width:14px;height:14px}
+.post-loc-inp{width:100%;padding:.78rem 1rem .78rem 2.5rem;background:var(--card);border:1.5px solid var(--border2);border-radius:11px;font-family:'DM Sans',sans-serif;font-size:.84rem;color:var(--text);outline:none;transition:border-color .2s}
+.post-loc-inp:focus{border-color:var(--red)}.post-loc-inp::placeholder{color:var(--sub2)}
+/* role safety checklist */
+.safety-checklist{background:rgba(255,204,0,.06);border:1px solid rgba(255,204,0,.18);border-radius:10px;padding:.85rem;margin-bottom:.8rem}
+.sc-title{font-size:.78rem;font-weight:700;color:var(--yellow);margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem}
+.sc-title svg{width:14px;height:14px;stroke:var(--yellow);fill:none;stroke-width:1.8;stroke-linecap:round}
+.sc-item{display:flex;align-items:center;gap:.5rem;padding:.3rem 0;border-bottom:1px solid rgba(255,204,0,.08);cursor:pointer}
+.sc-item:last-child{border:none}
+.sc-check{width:18px;height:18px;border-radius:5px;border:1.5px solid rgba(255,204,0,.4);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.sc-check.checked{background:var(--yellow);border-color:var(--yellow)}
+.sc-check.checked svg{opacity:1}.sc-check svg{width:10px;height:10px;stroke:#000;opacity:0}
+.sc-text{font-size:.73rem;color:var(--sub);line-height:1.4}
+/* SOS modal */
+.sos-modal{border-radius:18px;overflow:hidden}
+.sos-header{background:#FF1744;padding:1.5rem;text-align:center}
+.sos-header h2{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;color:#fff}
+.sos-header p{font-size:.8rem;color:rgba(255,255,255,.75);margin-top:.3rem}
+.sos-body{padding:1.2rem}
+.sos-action{display:flex;align-items:center;gap:.8rem;padding:.85rem;background:var(--card2);border-radius:12px;margin-bottom:.6rem;cursor:pointer;transition:background .15s;border:none;width:100%;text-align:left;font-family:'DM Sans',sans-serif}
+.sos-action:hover{background:var(--card3)}
+.sos-action-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sos-action-ico svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.sos-action-title{font-size:.84rem;font-weight:600;color:var(--text)}
+.sos-action-sub{font-size:.69rem;color:var(--sub);margin-top:.08rem}
+/* profile photo modal */
+.photo-option{display:flex;align-items:center;gap:.75rem;padding:.85rem;background:var(--card);border-radius:12px;margin-bottom:.55rem;cursor:pointer;border:1.5px solid var(--border2);transition:border-color .2s}
+.photo-option:hover{border-color:var(--red)}
+.photo-option-ico{width:36px;height:36px;border-radius:9px;background:var(--card2);display:flex;align-items:center;justify-content:center;color:var(--sub)}
+.photo-option-ico svg{width:16px;height:16px}
+.photo-option-txt{font-size:.82rem;font-weight:500}
+/* report modal */
+.report-option{display:flex;align-items:center;gap:.75rem;padding:.75rem;background:var(--card);border-radius:11px;margin-bottom:.48rem;cursor:pointer;border:1.5px solid var(--border2);transition:border-color .2s}
+.report-option:hover{border-color:var(--red)}.report-option.selected{border-color:var(--red);background:rgba(255,59,48,.07)}
+.report-option-txt{font-size:.81rem;font-weight:500}
+.report-option-sub{font-size:.68rem;color:var(--sub);margin-top:.06rem}
+/* role safety alert */
+.role-safety-alert{background:var(--card);border-radius:18px;padding:0;overflow:hidden;max-width:360px;width:100%}
+.rsa-header{background:rgba(255,204,0,.12);padding:1.2rem;border-bottom:1px solid rgba(255,204,0,.15)}
+.rsa-header h3{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:var(--yellow);margin-bottom:.25rem}
+.rsa-header p{font-size:.74rem;color:var(--sub);line-height:1.5}
+.rsa-body{padding:1rem}
+.rsa-tip{display:flex;align-items:flex-start;gap:.55rem;padding:.55rem 0;border-bottom:1px solid var(--border)}
+.rsa-tip:last-child{border:none}
+.rsa-tip svg{width:14px;height:14px;flex-shrink:0;margin-top:.12rem;stroke:var(--green);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.rsa-tip-txt{font-size:.74rem;color:var(--sub);line-height:1.5}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:calc(var(--bottom-h) + 1.1rem);left:50%;transform:translateX(-50%) translateY(14px);background:var(--card2);color:var(--text);padding:.62rem 1.25rem;border-radius:22px;font-size:.79rem;font-weight:500;z-index:400;opacity:0;pointer-events:none;transition:all .26s;border:1px solid var(--border2);white-space:nowrap;max-width:88vw;text-align:center;box-shadow:0 5px 22px rgba(0,0,0,.32)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.reveal{opacity:0;transform:translateY(12px);transition:opacity .48s,transform .48s}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+@media(min-width:500px){
+  .main,.topnav,.bottomnav{max-width:480px;left:50%;right:auto;width:100%}
+  .main{left:0;right:0;transform:none;margin:auto}
+  .topnav,.bottomnav{transform:translateX(-50%)}
+  .fab{right:calc(50% - 215px)}.sos-btn{left:calc(50% - 215px)}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ LOGIN ═══ -->
+<div class="login-screen" id="loginScreen">
+  <div class="ls-logo">M</div>
+  <div class="ls-brand"><span>MovMuriaé</span></div>
+  <p class="ls-slogan">A cidade em movimento, em tempo real.</p>
+  <div class="auth-box">
+    <div class="auth-tabs">
+      <button class="ltab active" id="lt0" onclick="switchTab(0)">Entrar</button>
+      <button class="ltab" id="lt1" onclick="switchTab(1)">Criar conta</button>
+    </div>
+    <!-- LOGIN -->
+    <div id="fLogin">
+      <div class="inp-group">
+        <label class="inp-label">E-mail</label>
+        <div class="inp-wrap">
+          <span class="il"><svg class="ic" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,4 12,13 22,4"/></svg></span>
+          <input type="email" class="finput" id="lEmail" placeholder="seu@email.com" autocomplete="email" oninput="clrLE()"/>
+        </div>
+      </div>
+      <div class="inp-group">
+        <label class="inp-label">Senha</label>
+        <div class="inp-wrap">
+          <span class="il"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+          <input type="password" class="finput" id="lPass" placeholder="Sua senha" onkeydown="if(event.key==='Enter')doLogin()" oninput="clrLE()"/>
+        </div>
+        <div class="vm e" id="lErr"></div>
+      </div>
+      <button class="btn-main" id="btnL" onclick="doLogin()">
+        <span id="btnLT">Entrar</span><div class="spinner" id="spL"></div>
+        <svg id="arrL" class="ic" viewBox="0 0 24 24" width="15" height="15" style="stroke:#fff"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg>
+      </button>
+      <div class="auth-footer">Não tem conta? <a onclick="switchTab(1)">Criar agora</a></div>
+    </div>
+    <!-- CADASTRO -->
+    <div id="fCad" style="display:none">
+      <div class="inp-group">
+        <label class="inp-label">Nome completo</label>
+        <div class="inp-wrap">
+          <span class="il"><svg class="ic" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+          <input type="text" class="finput" id="cNome" placeholder="Ex: Maria Silva" oninput="vNome()"/>
+          <span class="ir" id="sNome"></span>
+        </div><div class="vm" id="mNome"></div>
+      </div>
+      <div class="inp-group">
+        <label class="inp-label">@usuário</label>
+        <div class="inp-wrap">
+          <span class="il"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"/></svg></span>
+          <input type="text" class="finput" id="cUser" placeholder="@seunome" oninput="vUser()" autocomplete="username"/>
+          <span class="ir" id="sUser"></span>
+        </div><div class="vm" id="mUser"></div>
+      </div>
+      <div class="inp-group">
+        <label class="inp-label">E-mail</label>
+        <div class="inp-wrap">
+          <span class="il"><svg class="ic" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,4 12,13 22,4"/></svg></span>
+          <input type="email" class="finput" id="cEmail" placeholder="seu@email.com" oninput="vEmail()" autocomplete="email"/>
+          <span class="ir" id="sEmail"></span>
+        </div><div class="vm" id="mEmail"></div>
+      </div>
+      <div class="inp-group">
+        <label class="inp-label">Telefone (para verificação)</label>
+        <div class="inp-wrap">
+          <span class="il"><svg class="ic" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.64 3.18 2 2 0 0 1 3.61 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6.07 6.07l.97-.97a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
+          <input type="tel" class="finput" id="cPhone" placeholder="(32) 99999-0000" oninput="vPhone()"/>
+          <span class="ir" id="sPhone"></span>
+        </div><div class="vm" id="mPhone"></div>
+      </div>
+      <div class="inp-group">
+        <label class="inp-label">Senha</label>
+        <div class="inp-wrap">
+          <span class="il"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+          <input type="password" class="finput" id="cPass" placeholder="Mínimo 6 caracteres" oninput="vPass()" autocomplete="new-password"/>
+          <span class="ir" id="sPass"></span>
+        </div>
+        <div class="str-wrap" id="strW"><div class="str-bar"><div class="str-fill" id="strF"></div></div><div class="str-lbl" id="strL"></div></div>
+        <div class="vm" id="mPass"></div>
+      </div>
+      <button class="btn-main" id="btnC" onclick="doCadastro()">
+        <span id="btnCT">Criar conta</span><div class="spinner" id="spC"></div>
+        <svg id="arrC" class="ic" viewBox="0 0 24 24" width="15" height="15" style="stroke:#fff"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg>
+      </button>
+      <div class="auth-footer">Já tem conta? <a onclick="switchTab(0)">Entrar</a></div>
+    </div>
+    <button class="btn-skip" onclick="skipLogin()">Continuar sem conta</button>
+  </div>
+</div>
+
+<!-- ═══ TOP NAV ═══ -->
+<nav class="topnav">
+  <a href="#" class="nav-logo">
+    <div class="logo-chip">M</div>
+    <div class="logo-name"><span>MovMuriaé</span></div>
+  </a>
+  <div class="nav-r">
+    <button class="nav-btn notif-pip" id="notifBtn" onclick="openNotifModal()">
+      <svg class="ic" viewBox="0 0 24 24" width="16" height="16"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+    </button>
+    <button class="nav-btn" onclick="goScreen('perfil')">
+      <svg class="ic" viewBox="0 0 24 24" width="16" height="16"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </button>
+  </div>
+</nav>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+
+  <!-- HOME -->
+  <div class="screen active" id="screenHome">
+    <div class="feed-hero">
+      <div class="hero-greet" id="heroGreet">Olá, visitante</div>
+      <div class="hero-city"><b>Muriaé</b> ao vivo</div>
+      <div class="hero-sub">Movimente-se melhor. Decida mais rápido.</div>
+      <div class="status-row">
+        <div class="chip"><span class="pip pip-r"></span>3 alertas ativos</div>
+        <div class="chip"><span class="pip pip-y"></span>Trânsito moderado</div>
+        <div class="chip"><span class="pip pip-g"></span>Centro ok</div>
+      </div>
+    </div>
+    <div class="filter-row">
+      <button class="ftab active" onclick="filterFeed('todos',this)">Todos</button>
+      <button class="ftab" onclick="filterFeed('transit',this)">Trânsito</button>
+      <button class="ftab" onclick="filterFeed('danger',this)">Denúncia</button>
+      <button class="ftab" onclick="filterFeed('safe',this)">Segurança</button>
+      <button class="ftab" onclick="filterFeed('role',this)">Rolê</button>
+    </div>
+    <div id="feedContainer"></div>
+  </div>
+
+  <!-- MAPA -->
+  <div class="screen" id="screenMapa">
+    <div class="sec-pad"><div class="sec-head"><div class="sec-title">Mapa ao Vivo — Muriaé/MG</div><button class="sec-link" onclick="refreshMap()">Atualizar</button></div></div>
+    <div class="map-filters">
+      <button class="mft on-r" id="mfR" onclick="toggleMF(this,'r')">Perigo</button>
+      <button class="mft on-y" id="mfY" onclick="toggleMF(this,'y')">Alerta</button>
+      <button class="mft on-g" id="mfG" onclick="toggleMF(this,'g')">Seguro</button>
+      <button class="mft" onclick="showToast('Filtro de blitz em breve')">Blitz</button>
+      <button class="mft" onclick="showToast('Filtro de obras em breve')">Obras</button>
+    </div>
+    <div class="map-container"><div id="mapLeaflet"></div></div>
+    <div class="sec-pad" style="margin-top:.35rem"><div class="sec-head"><div class="sec-title">Mais reportadas hoje</div></div></div>
+    <div class="rank-card reveal"><div class="rank-n t">1</div><div class="rank-info"><div class="rank-name">Av. Constantino Paleta</div><div class="rank-det">12 ocorrências · última: 8min · Centro</div></div><div class="rlvl rl-a">Alto</div></div>
+    <div class="rank-card reveal"><div class="rank-n t">2</div><div class="rank-info"><div class="rank-name">Bairro Dornelas</div><div class="rank-det">8 ocorrências · última: 22min · Muriaé</div></div><div class="rlvl rl-a">Alto</div></div>
+    <div class="rank-card reveal"><div class="rank-n">3</div><div class="rank-info"><div class="rank-name">Av. Astolfo Dutra</div><div class="rank-det">5 ocorrências · última: 41min · Muriaé</div></div><div class="rlvl rl-m">Médio</div></div>
+    <div class="rank-card reveal"><div class="rank-n">4</div><div class="rank-info"><div class="rank-name">Terminal Rodoviário</div><div class="rank-det">3 ocorrências · última: 1h · Muriaé</div></div><div class="rlvl rl-m">Médio</div></div>
+  </div>
+
+  <!-- SEGURANÇA -->
+  <div class="screen" id="screenSeg">
+    <div class="seg-banner reveal">
+      <div class="seg-title">Mapa de Segurança</div>
+      <div class="seg-sub">Ajude a comunidade marcando locais de risco em Muriaé. Seu reporte salva vidas.</div>
+      <button class="seg-btn" onclick="openNewPost('danger')"><svg viewBox="0 0 24 24" style="stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round" width="13" height="13"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Reportar área perigosa</button>
+    </div>
+    <div class="sec-pad"><div class="sec-head"><div class="sec-title">Ranking de risco</div></div></div>
+    <div class="area-card reveal"><div class="area-head"><div class="area-name">Centro — Noite</div><div class="rlvl rl-a">Risco Alto</div></div><div class="area-meta">Av. Constantino Paleta · Após 21h · 47 confirmações</div><div class="area-bar-wrap"><div class="area-bar" style="width:87%;background:var(--red)"></div></div></div>
+    <div class="area-card reveal"><div class="area-head"><div class="area-name">Bairro Dornelas</div><div class="rlvl rl-a">Risco Alto</div></div><div class="area-meta">Rua São Perio · Após 22h · 38 confirmações</div><div class="area-bar-wrap"><div class="area-bar" style="width:72%;background:var(--red)"></div></div></div>
+    <div class="area-card reveal"><div class="area-head"><div class="area-name">Av. Astolfo Dutra</div><div class="rlvl rl-m">Risco Médio</div></div><div class="area-meta">Próx. ao Terminal · Tarde/Noite · 21 confirmações</div><div class="area-bar-wrap"><div class="area-bar" style="width:44%;background:var(--yellow)"></div></div></div>
+    <div class="area-card reveal"><div class="area-head"><div class="area-name">Alto do Castelo</div><div class="rlvl rl-m">Risco Médio</div></div><div class="area-meta">Ladeira do Castelo · À noite · 17 confirmações</div><div class="area-bar-wrap"><div class="area-bar" style="width:35%;background:var(--yellow)"></div></div></div>
+    <div class="area-card reveal"><div class="area-head"><div class="area-name">Bairro Palmeiras</div><div class="rlvl rl-b">Risco Baixo</div></div><div class="area-meta">Área residencial · Tranquilo · 5 confirmações</div><div class="area-bar-wrap"><div class="area-bar" style="width:12%;background:var(--green)"></div></div></div>
+  </div>
+
+  <!-- ROLÊ -->
+  <div class="screen" id="screenRole">
+    <div class="sec-pad"><div class="sec-head"><div class="sec-title">Classificados de Rolê</div><button class="sec-link" onclick="openNewPost('role')">+ Publicar</button></div></div>
+    <!-- Global security alert for rolê -->
+    <div style="margin:0 1rem .75rem;padding:.75rem .9rem;background:rgba(255,204,0,.07);border:1px solid rgba(255,204,0,.18);border-radius:12px">
+      <div style="font-size:.75rem;font-weight:700;color:var(--yellow);margin-bottom:.25rem;display:flex;align-items:center;gap:.4rem">
+        <svg class="ic" viewBox="0 0 24 24" width="14" height="14" style="stroke:var(--yellow)"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Dica de segurança
+      </div>
+      <div style="font-size:.72rem;color:var(--sub);line-height:1.55">Nunca pague antes de confirmar o rolê. Combine em local público e avise alguém de confiança. Use o botão <strong style="color:var(--text)">SOS</strong> em emergências.</div>
+    </div>
+    <div class="filter-row">
+      <button class="ftab active" onclick="filterRole('todos',this)">Todos</button>
+      <button class="ftab" onclick="filterRole('carona',this)">Carona</button>
+      <button class="ftab" onclick="filterRole('uber',this)">Uber</button>
+      <button class="ftab" onclick="filterRole('festa',this)">Festa</button>
+      <button class="ftab" onclick="filterRole('after',this)">After</button>
+    </div>
+    <div id="roleContainer"></div>
+  </div>
+
+  <!-- PERFIL -->
+  <div class="screen" id="screenPerfil">
+    <div class="profile-hero">
+      <div class="prof-av-wrap" onclick="openPhotoModal()">
+        <div class="prof-av" id="profAv"><span id="profAvTxt">?</span></div>
+        <div class="prof-av-edit"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+      </div>
+      <div class="prof-name" id="profName">Visitante</div>
+      <div class="prof-user" id="profUser">@convidado</div>
+      <div class="prof-badges" id="profBadges"></div>
+      <div class="prof-rep"><span class="rep-ic"><svg viewBox="0 0 24 24"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></span><span id="profRepTxt">Reputação: 0 pts</span></div>
+    </div>
+    <div class="prof-stats">
+      <div class="stat-box reveal"><div class="stat-n" id="sPosts">0</div><div class="stat-l">Posts</div></div>
+      <div class="stat-box reveal"><div class="stat-n" id="sConf">0</div><div class="stat-l">Confirmados</div></div>
+      <div class="stat-box reveal"><div class="stat-n" id="sRep2">0</div><div class="stat-l">Reputação</div></div>
+    </div>
+    <div class="sec-pad"><div class="sec-head"><div class="sec-title">Configurações</div></div></div>
+    <div class="settings">
+      <div class="set-item">
+        <div class="set-l"><div class="set-ic"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></div><span class="set-nm">Modo Escuro</span></div>
+        <div><input type="checkbox" class="tgl-input" id="darkTgl" checked onchange="toggleDark()"/><label class="tgl-label" for="darkTgl"></label></div>
+      </div>
+      <div class="set-item" onclick="openNotifSettings()">
+        <div class="set-l"><div class="set-ic"><svg class="ic" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+          <div><div class="set-nm">Notificações</div><div style="font-size:.67rem;color:var(--sub)" id="notifStatus">Toque para configurar</div></div>
+        </div>
+        <div class="set-arr"><svg viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+      </div>
+      <div class="set-item" onclick="openLocSettings()">
+        <div class="set-l"><div class="set-ic"><svg class="ic" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+          <div><div class="set-nm">Localização</div><div style="font-size:.67rem;color:var(--sub)" id="locStatus">Toque para configurar</div></div>
+        </div>
+        <div class="set-arr"><svg viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+      </div>
+      <div class="set-item" onclick="openPrivacy()">
+        <div class="set-l"><div class="set-ic"><svg class="ic" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+          <div><div class="set-nm">Privacidade & Termos</div><div style="font-size:.67rem;color:var(--sub)">Seus dados, seus direitos</div></div>
+        </div>
+        <div class="set-arr"><svg viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+      </div>
+      <div class="set-item" onclick="openVerification()">
+        <div class="set-l"><div class="set-ic" style="color:var(--blue)"><svg class="ic" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg></div>
+          <div><div class="set-nm">Verificar identidade</div><div style="font-size:.67rem;color:var(--sub)" id="verifyStatus">E-mail e telefone</div></div>
+        </div>
+        <div class="set-arr"><svg viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+      </div>
+      <div class="set-item" onclick="handleLogout()">
+        <div class="set-l"><div class="set-ic" style="color:var(--red)"><svg class="ic" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div><span class="set-nm" style="color:var(--red)">Sair da conta</span></div>
+        <div class="set-arr"><svg viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ BOTTOM NAV ═══ -->
+<nav class="bottomnav">
+  <button class="tab-btn active" id="tabHome" onclick="goScreen('home')">
+    <svg class="ic" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+    <span class="tab-lbl">Início</span>
+  </button>
+  <button class="tab-btn" id="tabMapa" onclick="goScreen('mapa')">
+    <svg class="ic" viewBox="0 0 24 24"><polygon points="1,6 1,22 8,18 16,22 23,18 23,2 16,6 8,2"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+    <span class="tab-lbl">Mapa</span>
+  </button>
+  <button class="tab-btn" id="tabSeg" onclick="goScreen('seg')">
+    <svg class="ic" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    <span class="tab-lbl">Segurança</span>
+  </button>
+  <button class="tab-btn" id="tabRole" onclick="goScreen('role')">
+    <svg class="ic" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <span class="tab-lbl">Rolê</span>
+  </button>
+</nav>
+
+<!-- FAB + SOS -->
+<button class="fab" id="fabBtn" onclick="openNewPost('transit')">
+  <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+</button>
+<button class="sos-btn" id="sosBtn" onclick="openSOS()">SOS</button>
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- New Post -->
+<div class="backdrop" id="newPostModal" onclick="closeBg(event,'newPostModal')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Nova publicação</div>
+    <div class="type-grid">
+      <button class="type-btn" id="tT" onclick="selPT('transit')"><div class="type-ico" style="color:var(--yellow)"><svg class="ic" viewBox="0 0 24 24"><path d="M1.5 8s2.5-3 10.5-3 10.5 3 10.5 3"/><path d="M22 8v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8"/><circle cx="7" cy="15" r="1.5"/><circle cx="17" cy="15" r="1.5"/></svg></div><span class="type-name">Trânsito</span></button>
+      <button class="type-btn" id="tD" onclick="selPT('danger')"><div class="type-ico" style="color:var(--red)"><svg class="ic" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><span class="type-name">Denúncia</span></button>
+      <button class="type-btn" id="tS" onclick="selPT('safe')"><div class="type-ico" style="color:var(--green)"><svg class="ic" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><span class="type-name">Segurança</span></button>
+      <button class="type-btn" id="tR" onclick="selPT('role')"><div class="type-ico" style="color:#8888f0"><svg class="ic" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><span class="type-name">Rolê</span></button>
+    </div>
+    <!-- Role safety checklist (shown only for role type) -->
+    <div class="safety-checklist" id="safetyChecklist" style="display:none">
+      <div class="sc-title"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Confirme antes de publicar</div>
+      <div class="sc-item" onclick="toggleCheck(this)"><div class="sc-check"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg></div><div class="sc-text">Não vou solicitar pagamento antecipado</div></div>
+      <div class="sc-item" onclick="toggleCheck(this)"><div class="sc-check"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg></div><div class="sc-text">O encontro será em local público e seguro</div></div>
+      <div class="sc-item" onclick="toggleCheck(this)"><div class="sc-check"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg></div><div class="sc-text">Não vou pedir dados bancários ou pessoais</div></div>
+      <div class="sc-item" onclick="toggleCheck(this)"><div class="sc-check"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg></div><div class="sc-text">Estou ciente que denúncias falsas são punidas</div></div>
+    </div>
+    <textarea class="post-textarea" id="postTxt" placeholder="O que está acontecendo em Muriaé?"></textarea>
+    <div class="loc-wrap">
+      <span class="loc-ico"><svg class="ic" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
+      <input type="text" class="post-loc-inp" id="postLoc" placeholder="Localização (ex: Centro, Av. Constantino)"/>
+    </div>
+    <button class="btn-main" onclick="submitPost()">
+      <span>Publicar</span>
+      <svg class="ic" viewBox="0 0 24 24" width="14" height="14" style="stroke:#fff"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- Notifications Settings -->
+<div class="backdrop center" id="notifModal" onclick="closeBg(event,'notifModal')">
+  <div class="modal-box">
+    <div class="modal-title">🔔 Notificações</div>
+    <div class="modal-sub">Escolha quais alertas você deseja receber em tempo real de Muriaé e região.</div>
+    <div class="settings-panel">
+      <div class="sp-item">
+        <div class="sp-l"><div class="sp-ic"><svg class="ic" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg></div><div><div class="sp-nm">Alertas de trânsito</div><div class="sp-desc">Acidentes, bloqueios e blitz</div></div></div>
+        <input type="checkbox" class="tgl-input" id="ntAlerta" checked/><label class="tgl-label" for="ntAlerta"></label>
+      </div>
+      <div class="sp-item">
+        <div class="sp-l"><div class="sp-ic"><svg class="ic" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div><div class="sp-nm">Alertas de segurança</div><div class="sp-desc">Áreas de risco na sua região</div></div></div>
+        <input type="checkbox" class="tgl-input" id="ntSeg" checked/><label class="tgl-label" for="ntSeg"></label>
+      </div>
+      <div class="sp-item">
+        <div class="sp-l"><div class="sp-ic"><svg class="ic" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div><div class="sp-nm">Novos rolês</div><div class="sp-desc">Caronas e eventos próximos</div></div></div>
+        <input type="checkbox" class="tgl-input" id="ntRole"/><label class="tgl-label" for="ntRole"></label>
+      </div>
+      <div class="sp-item">
+        <div class="sp-l"><div class="sp-ic"><svg class="ic" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div><div class="sp-nm">Respostas e confirmações</div><div class="sp-desc">Quando alguém interagir com seus posts</div></div></div>
+        <input type="checkbox" class="tgl-input" id="ntResp" checked/><label class="tgl-label" for="ntResp"></label>
+      </div>
+    </div>
+    <button class="btn-main" onclick="saveNotifSettings()">Salvar preferências</button>
+  </div>
+</div>
+
+<!-- Location Settings -->
+<div class="backdrop center" id="locModal" onclick="closeBg(event,'locModal')">
+  <div class="modal-box">
+    <div class="modal-title">📍 Localização</div>
+    <div class="modal-sub">Controle como o MovMuriaé usa sua localização para exibir alertas e o mapa ao vivo.</div>
+    <div class="settings-panel">
+      <div class="sp-item">
+        <div class="sp-l"><div class="sp-ic"><svg class="ic" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div><div><div class="sp-nm">Localização no mapa</div><div class="sp-desc">Mostra sua posição no mapa ao vivo</div></div></div>
+        <input type="checkbox" class="tgl-input" id="lcMap" checked/><label class="tgl-label" for="lcMap"></label>
+      </div>
+      <div class="sp-item">
+        <div class="sp-l"><div class="sp-ic"><svg class="ic" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div><div><div class="sp-nm">Alertas por proximidade</div><div class="sp-desc">Notifica ocorrências perto de você</div></div></div>
+        <input type="checkbox" class="tgl-input" id="lcAlert" checked/><label class="tgl-label" for="lcAlert"></label>
+      </div>
+      <div class="sp-item">
+        <div class="sp-l"><div class="sp-ic"><svg class="ic" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div><div class="sp-nm">Compartilhar no SOS</div><div class="sp-desc">Envia localização exata em emergências</div></div></div>
+        <input type="checkbox" class="tgl-input" id="lcSOS" checked/><label class="tgl-label" for="lcSOS"></label>
+      </div>
+      <div class="sp-item">
+        <div class="sp-l"><div class="sp-ic"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div><div class="sp-nm">Localização nos posts</div><div class="sp-desc">Adiciona cidade/bairro automaticamente</div></div></div>
+        <input type="checkbox" class="tgl-input" id="lcPost"/><label class="tgl-label" for="lcPost"></label>
+      </div>
+    </div>
+    <div style="font-size:.7rem;color:var(--sub);margin:.5rem 0 1rem;line-height:1.55;padding:.65rem;background:var(--card2);border-radius:9px">Sua localização exata nunca é exibida publicamente. Usamos apenas para funcionalidades como mapa e alertas próximos.</div>
+    <button class="btn-main" onclick="saveLocSettings()">Salvar configurações</button>
+  </div>
+</div>
+
+<!-- Privacy & Terms -->
+<div class="backdrop center" id="privacyModal" onclick="closeBg(event,'privacyModal')">
+  <div class="modal-box" style="max-height:85vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <div class="modal-title" style="margin:0">Privacidade & Termos</div>
+      <button onclick="closeModal('privacyModal')" style="background:none;border:none;color:var(--sub);cursor:pointer;font-size:1.2rem">✕</button>
+    </div>
+    <div class="privacy-section">
+      <h3>O que coletamos</h3>
+      <p>Coletamos apenas os dados necessários para o funcionamento do app: nome, e-mail, telefone (para verificação), localização (quando autorizada) e conteúdo dos posts. Nunca vendemos seus dados para terceiros.</p>
+    </div>
+    <div class="privacy-section">
+      <h3>Como usamos seus dados</h3>
+      <p>Seus dados são usados exclusivamente para: exibir alertas próximos, verificar sua identidade, personalizar sua experiência e melhorar a segurança da comunidade. Localização é processada localmente sempre que possível.</p>
+    </div>
+    <div class="privacy-section">
+      <h3>Proteção de dados pessoais</h3>
+      <p>Seu número de telefone e e-mail nunca são exibidos publicamente. Apenas o @usuário e posts são visíveis para outros usuários. Você pode solicitar exclusão de todos os seus dados a qualquer momento.</p>
+    </div>
+    <div class="privacy-section">
+      <h3>Segurança na plataforma</h3>
+      <p>Posts com denúncias falsas são removidos e o usuário pode ser banido. Usuários novos (menos de 7 dias) têm limitações de publicação para evitar spam e golpes. O sistema de reputação penaliza automaticamente comportamentos suspeitos.</p>
+    </div>
+    <div class="privacy-section">
+      <h3>Seus direitos</h3>
+      <p>Você tem direito de acessar, corrigir ou deletar seus dados a qualquer momento. Entre em contato via suporte@movmuriae.com.br. Respondemos em até 72 horas úteis.</p>
+    </div>
+    <div class="privacy-section">
+      <h3>Classificados de Rolê — Aviso importante</h3>
+      <p>O MovMuriaé não se responsabiliza por acordos feitos entre usuários na seção Rolê. Sempre se encontre em locais públicos, nunca pague adiantado e use o botão SOS em casos de emergência. Denuncie golpistas pelo botão de denúncia.</p>
+    </div>
+    <button class="btn-main" onclick="closeModal('privacyModal')" style="margin-top:.5rem">Entendi</button>
+  </div>
+</div>
+
+<!-- Verification -->
+<div class="backdrop center" id="verifyModal" onclick="closeBg(event,'verifyModal')">
+  <div class="modal-box">
+    <div class="modal-title">Verificar identidade</div>
+    <div class="modal-sub">Usuários verificados ganham mais credibilidade e podem publicar no Rolê sem restrições.</div>
+    <div style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:1rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:.8rem;background:var(--card2);border-radius:11px">
+        <div style="display:flex;align-items:center;gap:.65rem">
+          <div style="width:32px;height:32px;border-radius:9px;background:rgba(0,122,255,.15);display:flex;align-items:center;justify-content:center;color:var(--blue)"><svg class="ic" viewBox="0 0 24 24" width="15" height="15"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,4 12,13 22,4"/></svg></div>
+          <div><div style="font-size:.82rem;font-weight:600">E-mail</div><div style="font-size:.68rem;color:var(--sub)" id="verifyEmailTxt">Não verificado</div></div>
+        </div>
+        <button onclick="verifyEmail()" id="verifyEmailBtn" style="padding:.35rem .75rem;background:var(--blue);border:none;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.71rem;font-weight:600;color:#fff;cursor:pointer">Verificar</button>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:.8rem;background:var(--card2);border-radius:11px">
+        <div style="display:flex;align-items:center;gap:.65rem">
+          <div style="width:32px;height:32px;border-radius:9px;background:rgba(52,199,89,.15);display:flex;align-items:center;justify-content:center;color:var(--green)"><svg class="ic" viewBox="0 0 24 24" width="15" height="15"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.64 3.18 2 2 0 0 1 3.61 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6.07 6.07l.97-.97a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
+          <div><div style="font-size:.82rem;font-weight:600">Telefone</div><div style="font-size:.68rem;color:var(--sub)" id="verifyPhoneTxt">Não verificado</div></div>
+        </div>
+        <button onclick="verifyPhone()" id="verifyPhoneBtn" style="padding:.35rem .75rem;background:var(--green);border:none;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.71rem;font-weight:600;color:#fff;cursor:pointer">Verificar</button>
+      </div>
+    </div>
+    <div style="font-size:.71rem;color:var(--sub);line-height:1.55;padding:.65rem;background:var(--card2);border-radius:9px">Usuários com e-mail e telefone verificados podem publicar caronas, acessar todas as funções do Rolê e têm reputação aumentada.</div>
+    <button class="btn-main" style="margin-top:1rem" onclick="closeModal('verifyModal')">Fechar</button>
+  </div>
+</div>
+
+<!-- Photo Modal -->
+<div class="backdrop center" id="photoModal" onclick="closeBg(event,'photoModal')">
+  <div class="modal-box">
+    <div class="modal-title">Foto de perfil</div>
+    <div class="modal-sub">Escolha como atualizar sua foto de perfil.</div>
+    <div class="photo-option" onclick="triggerPhotoUpload()">
+      <div class="photo-option-ico"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg></div>
+      <div><div class="photo-option-txt">Escolher da galeria</div><div style="font-size:.7rem;color:var(--sub);margin-top:.1rem">JPEG ou PNG até 5MB</div></div>
+    </div>
+    <div class="photo-option" onclick="useAvatar()">
+      <div class="photo-option-ico"><svg class="ic" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+      <div><div class="photo-option-txt">Usar inicial do nome</div><div style="font-size:.7rem;color:var(--sub);margin-top:.1rem">Avatar padrão colorido</div></div>
+    </div>
+    <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)"/>
+    <button class="btn-outline" style="margin-top:.3rem;width:100%" onclick="closeModal('photoModal')">Cancelar</button>
+  </div>
+</div>
+
+<!-- Report Modal -->
+<div class="backdrop center" id="reportModal" onclick="closeBg(event,'reportModal')">
+  <div class="modal-box">
+    <div class="modal-title">Denunciar</div>
+    <div class="modal-sub" id="reportTarget">Selecione o motivo da denúncia:</div>
+    <div id="reportOptions">
+      <div class="report-option" onclick="selectReport(this,'golpe')"><div><div class="report-option-txt">Tentativa de golpe</div><div class="report-option-sub">Pedido de dinheiro, dados bancários, etc.</div></div></div>
+      <div class="report-option" onclick="selectReport(this,'falso')"><div><div class="report-option-txt">Informação falsa</div><div class="report-option-sub">Alerta falso ou conteúdo enganoso</div></div></div>
+      <div class="report-option" onclick="selectReport(this,'spam')"><div><div class="report-option-txt">Spam ou propaganda</div><div class="report-option-sub">Conteúdo repetitivo ou publicidade não autorizada</div></div></div>
+      <div class="report-option" onclick="selectReport(this,'inadequado')"><div><div class="report-option-txt">Conteúdo inadequado</div><div class="report-option-sub">Linguagem ofensiva, assédio ou ameaças</div></div></div>
+      <div class="report-option" onclick="selectReport(this,'identidade')"><div><div class="report-option-txt">Identidade falsa</div><div class="report-option-sub">Usuário se passando por outra pessoa</div></div></div>
+    </div>
+    <div class="modal-actions" style="margin-top:.8rem">
+      <button class="btn-outline" onclick="closeModal('reportModal')">Cancelar</button>
+      <button class="btn-confirm" id="btnReport" onclick="submitReport()" disabled>Denunciar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Role Safety Alert -->
+<div class="backdrop center" id="roleSafetyModal">
+  <div class="role-safety-alert">
+    <div class="rsa-header">
+      <h3>⚠️ Aviso de segurança — Rolê</h3>
+      <p>Antes de entrar em contato, leia estas dicas para sua proteção:</p>
+    </div>
+    <div class="rsa-body">
+      <div class="rsa-tip"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg><div class="rsa-tip-txt">Combine o encontro em local público e movimentado (ex: shopping, praça central)</div></div>
+      <div class="rsa-tip"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg><div class="rsa-tip-txt">Avise um familiar ou amigo sobre o local e horário do encontro</div></div>
+      <div class="rsa-tip"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg><div class="rsa-tip-txt">Nunca pague valores adiantados — pagamento só após confirmar presença</div></div>
+      <div class="rsa-tip"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg><div class="rsa-tip-txt">Não compartilhe dados bancários, CPF ou senha em nenhuma hipótese</div></div>
+      <div class="rsa-tip"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg><div class="rsa-tip-txt">Use o botão <strong>SOS</strong> do app em qualquer situação de risco</div></div>
+    </div>
+    <div style="padding:0 1rem 1rem;display:flex;gap:.6rem">
+      <button class="btn-outline" style="flex:1" onclick="closeModal('roleSafetyModal')">Cancelar</button>
+      <button class="btn-confirm btn-green" style="flex:2" id="roleSafetyContinueBtn" onclick="roleSafetyContinue()">Entendi, continuar</button>
+    </div>
+  </div>
+</div>
+
+<!-- SOS Modal -->
+<div class="backdrop center" id="sosModal" onclick="closeBg(event,'sosModal')">
+  <div class="sos-modal modal-box" style="padding:0;overflow:hidden">
+    <div class="sos-header">
+      <h2>🆘 SOS — Emergência</h2>
+      <p>Você está em perigo? Escolha uma opção abaixo.</p>
+    </div>
+    <div class="sos-body">
+      <button class="sos-action" onclick="sosCall190()">
+        <div class="sos-action-ico" style="background:#FF1744"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.64 3.18 2 2 0 0 1 3.61 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6.07 6.07l.97-.97a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
+        <div><div class="sos-action-title">Ligar para a Polícia (190)</div><div class="sos-action-sub">Abre discagem para o 190 imediatamente</div></div>
+      </button>
+      <button class="sos-action" onclick="sosSamu()">
+        <div class="sos-action-ico" style="background:#FF6B00"><svg viewBox="0 0 24 24"><path d="M8 2v4M16 2v4M3 10h18M3 6h18a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z"/><path d="M12 14v4M10 16h4"/></svg></div>
+        <div><div class="sos-action-title">Ligar para o SAMU (192)</div><div class="sos-action-sub">Emergência médica</div></div>
+      </button>
+      <button class="sos-action" onclick="sosLocation()">
+        <div class="sos-action-ico" style="background:var(--blue)"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+        <div><div class="sos-action-title">Compartilhar localização</div><div class="sos-action-sub">Envia sua posição para um contato</div></div>
+      </button>
+      <button class="sos-action" onclick="sosAlert()">
+        <div class="sos-action-ico" style="background:var(--yellow)"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+        <div><div class="sos-action-title">Publicar alerta de segurança</div><div class="sos-action-sub">Avisa a comunidade sobre a ocorrência</div></div>
+      </button>
+    </div>
+    <div style="padding:0 1rem 1.2rem"><button class="btn-outline" style="width:100%" onclick="closeModal('sosModal')">Fechar</button></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+/* ═══ DATA ═══ */
+const SEED=[
+  {id:1,type:'transit',user:'CarlosSantos',rep:4.8,loc:'Centro · Av. Constantino',text:'Acidente na Av. Constantino! Trânsito completamente parado, evitem a área por enquanto.',time:'8min atrás',likes:40,comments:12,confirms:28,isNew:false},
+  {id:2,type:'danger',user:'AnaSilva',rep:4.5,loc:'Dornelas',text:'Blitz agora no Bairro Dornelas! Polícia na entrada do bairro, documentos na mão.',time:'10min atrás',likes:55,comments:8,confirms:41,isNew:false},
+  {id:3,type:'safe',user:'PedroLima',rep:3.9,loc:'Palmeiras',text:'Bairro Palmeiras tranquilo hoje. Boa circulação em todas as vias principais.',time:'18min atrás',likes:22,comments:3,confirms:18,isNew:false},
+  {id:4,type:'role',user:'MarinaRocha',rep:4.2,loc:'Centro · Saída 21h',text:'Carona para festa na Lagoa! Saída às 21h do centro, 2 vagas. Dividir combustível.',time:'25min atrás',likes:14,comments:5,confirms:0,isNew:false},
+  {id:5,type:'transit',user:'JoaoFerreira',rep:4.7,loc:'Av. Astolfo Dutra',text:'Semáforo quebrado na Astolfo Dutra próximo ao terminal. Muita confusão.',time:'32min atrás',likes:31,comments:7,confirms:25,isNew:false},
+  {id:6,type:'danger',user:'RicardoM',rep:4.1,loc:'Alto do Castelo',text:'Cuidado na subida do Castelo à noite. Vários relatos de abordagens esta semana.',time:'1h atrás',likes:67,comments:19,confirms:54,isNew:false},
+];
+const ROLES=[
+  {id:1,type:'carona',title:'Carona para Festa na Lagoa!',dest:'Lagoa do Sapo',time:'21h de hoje',vagas:2,user:'MarinaRocha',rep:4.2,verified:true,phone:'5532999990001'},
+  {id:2,type:'uber',title:'Dividindo Uber para o Centro!',dest:'Centro',time:'20h30',vagas:1,user:'CamilaSouza',rep:3.8,verified:false,phone:'5532999990002'},
+  {id:3,type:'after',title:'After na Casa 015!',dest:'Bairro São Jorge',time:'Depois da balada',vagas:4,user:'Grupo015',rep:4.5,verified:true,phone:'5532999990003'},
+  {id:4,type:'festa',title:'Festa Junina no Clube Municipal',dest:'Clube Municipal',time:'Sáb, 19h',vagas:999,user:'EventosMuriae',rep:5.0,verified:true,phone:'5532999990004'},
+  {id:5,type:'carona',title:'Carona p/ Juiz de Fora (sábado)',dest:'JF — Shopping',time:'Sáb, 09h',vagas:3,user:'ThiagoJF',rep:4.6,verified:true,phone:'5532999990005'},
+];
+const MAP_PINS=[
+  {lat:-21.1280,lng:-42.3720,t:'r',title:'Acidente — Av. Constantino Paleta',sub:'Centro, Muriaé · Trânsito parado · 8min',badge:'Perigo'},
+  {lat:-21.1340,lng:-42.3660,t:'r',title:'Área Perigosa — Bairro Dornelas',sub:'Dornelas, Muriaé · Risco Alto · Após 22h',badge:'Perigo'},
+  {lat:-21.1195,lng:-42.3750,t:'y',title:'Blitz Policial',sub:'Av. Astolfo Dutra, Muriaé · Ativa agora',badge:'Alerta'},
+  {lat:-21.1260,lng:-42.3800,t:'y',title:'Trânsito Intenso — Rua Marechal',sub:'Centro, Muriaé · Horário de pico',badge:'Alerta'},
+  {lat:-21.1150,lng:-42.3680,t:'g',title:'Área Segura — Via do Aeroporto',sub:'Muriaé · Baixo movimento',badge:'Seguro'},
+  {lat:-21.1310,lng:-42.3620,t:'g',title:'Bairro Palmeiras — Tranquilo',sub:'Palmeiras, Muriaé · Sem ocorrências',badge:'Seguro'},
+  {lat:-21.1220,lng:-42.3700,t:'y',title:'Semáforo Quebrado',sub:'Av. Astolfo Dutra / Terminal, Muriaé',badge:'Alerta'},
+];
+const K={p:'mm_posts',u:'mm_users',s:'mm_sess',ph:'mm_photos'};
+const gJ=k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}};
+const sJ=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const getPosts=()=>gJ(K.p)||[...SEED];
+const savePosts=p=>sJ(K.p,p);
+const getUsers=()=>gJ(K.u)||[];
+const saveUsers=u=>sJ(K.u,u);
+const getSession=()=>gJ(K.s);
+const saveSession=s=>sJ(K.s,s);
+const clearSession=()=>localStorage.removeItem(K.s);
+
+let CU=null,_pt='transit',mapInst=null,mL={r:[],y:[],g:[]};
+let _reportCb=null,_wppPhone=null,_wppTitle=null;
+let _selectedReport=null;
+
+/* ═══ AUTH TABS ═══ */
+function switchTab(i){
+  document.getElementById('lt0').classList.toggle('active',i===0);
+  document.getElementById('lt1').classList.toggle('active',i===1);
+  document.getElementById('fLogin').style.display=i===0?'':'none';
+  document.getElementById('fCad').style.display=i===1?'':'none';
+}
+/* validation helpers */
+function vm(id,cls,txt){const el=document.getElementById(id);el.className='vm'+(cls?' '+cls:'')+(txt?' show':'');el.innerHTML=txt?'<span class="vd"></span>'+txt:''}
+function st(id,ico){const el=document.getElementById(id);el.textContent=ico;el.classList.toggle('show',!!ico)}
+function fi(id,s){document.getElementById(id).className='finput'+(s?' '+s+'-s':'')}
+function vNome(){const v=document.getElementById('cNome').value.trim();if(!v){vm('mNome','','');fi('cNome','');st('sNome','');return false}if(v.length<2){vm('mNome','e','Nome muito curto');fi('cNome','err');st('sNome','');return false}vm('mNome','s','Ótimo!');fi('cNome','ok');st('sNome','✓');return true}
+function vUser(){let r=document.getElementById('cUser').value.replace(/@/g,'').trim();if(r)document.getElementById('cUser').value='@'+r;if(!r){vm('mUser','','');fi('cUser','');st('sUser','');return false}if(r.length<3){vm('mUser','e','Mínimo 3 caracteres');fi('cUser','err');st('sUser','');return false}if(!/^[a-z0-9_.]+$/i.test(r)){vm('mUser','e','Apenas letras, números, _ e .');fi('cUser','err');st('sUser','');return false}if(getUsers().find(u=>u.username.toLowerCase()===r.toLowerCase())){vm('mUser','e','@'+r+' já está em uso');fi('cUser','err');st('sUser','✗');return false}vm('mUser','s','@'+r+' disponível');fi('cUser','ok');st('sUser','✓');return true}
+function vEmail(){const v=document.getElementById('cEmail').value.trim().toLowerCase();if(!v){vm('mEmail','','');fi('cEmail','');st('sEmail','');return false}if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)){vm('mEmail','e','E-mail inválido');fi('cEmail','err');st('sEmail','');return false}if(getUsers().find(u=>u.email===v)){vm('mEmail','w','Este e-mail já tem conta — entre em vez disso');fi('cEmail','err');st('sEmail','');return false}vm('mEmail','s','Disponível');fi('cEmail','ok');st('sEmail','✓');return true}
+function vPhone(){const v=document.getElementById('cPhone').value.replace(/\D/g,'');if(!v){vm('mPhone','','');fi('cPhone','');st('sPhone','');return false}if(v.length<10){vm('mPhone','e','Telefone inválido (mín. 10 dígitos)');fi('cPhone','err');st('sPhone','');return false}vm('mPhone','s','Telefone válido');fi('cPhone','ok');st('sPhone','✓');return true}
+function vPass(){const v=document.getElementById('cPass').value;const w=document.getElementById('strW'),f=document.getElementById('strF'),l=document.getElementById('strL');if(!v){vm('mPass','','');fi('cPass','');st('sPass','');w.classList.remove('show');return false}w.classList.add('show');let s=0;if(v.length>=6)s++;if(v.length>=10)s++;if(/[A-Z]/.test(v)&&/[a-z]/.test(v))s++;if(/\d/.test(v))s++;if(/[^A-Za-z0-9]/.test(v))s++;const lv=['','Muito fraca','Fraca','Média','Forte','Muito forte'],co=['','#FF3B30','#FF6830','#FFCC00','#34C759','#30D158'];f.style.width=(s/5*100)+'%';f.style.background=co[s]||'#FF3B30';l.textContent='Força: '+(lv[s]||'Fraca');if(v.length<6){vm('mPass','e','Mínimo 6 caracteres');fi('cPass','err');st('sPass','');return false}vm('mPass','s','Senha válida');fi('cPass','ok');st('sPass','✓');return true}
+
+function clrLE(){document.getElementById('lErr').classList.remove('show');document.getElementById('lEmail').className='finput';document.getElementById('lPass').className='finput'}
+function showLE(msg){const el=document.getElementById('lErr');el.innerHTML='<span class="vd"></span>'+msg;el.classList.add('show')}
+function setLoading(btn,sp,arr,txt,loading){
+  document.getElementById(btn).disabled=loading;
+  document.getElementById(sp).style.display=loading?'block':'none';
+  document.getElementById(arr).style.display=loading?'none':'';
+  document.getElementById(txt).textContent=loading?'Aguarde...':document.getElementById(txt).dataset.orig||document.getElementById(txt).textContent;
+}
+function doLogin(){
+  const em=document.getElementById('lEmail').value.trim().toLowerCase(),ps=document.getElementById('lPass').value;
+  if(!em){showLE('Informe seu e-mail.');fi('lEmail','err');return}
+  if(!ps){showLE('Informe sua senha.');fi('lPass','err');return}
+  setLoading('btnL','spL','arrL','btnLT',true);
+  setTimeout(()=>{
+    const us=getUsers(),u=us.find(x=>x.email===em&&x.password===ps);
+    setLoading('btnL','spL','arrL','btnLT',false);
+    document.getElementById('btnLT').textContent='Entrar';
+    if(!u){us.find(x=>x.email===em)?showLE('Senha incorreta. Verifique e tente novamente.'):showLE('Nenhuma conta encontrada com este e-mail.');fi('lPass','err');return}
+    CU={email:u.email,nome:u.nome,username:u.username,phone:u.phone,verifiedEmail:u.verifiedEmail,verifiedPhone:u.verifiedPhone,joinDate:u.joinDate,photo:u.photo};
+    saveSession(CU);enterApp();showToast('Bem-vindo de volta, '+u.nome);
+  },800);
+}
+function doCadastro(){
+  const ok=vNome()&vUser()&vEmail()&vPhone()&vPass();if(!ok)return;
+  const nome=document.getElementById('cNome').value.trim(),username=document.getElementById('cUser').value.replace('@','').trim(),email=document.getElementById('cEmail').value.trim().toLowerCase(),phone=document.getElementById('cPhone').value.replace(/\D/g,''),pass=document.getElementById('cPass').value;
+  setLoading('btnC','spC','arrC','btnCT',true);
+  setTimeout(()=>{
+    const us=getUsers();us.push({email,password:pass,nome,username,phone,verifiedEmail:false,verifiedPhone:false,joinDate:Date.now(),photo:null});
+    saveUsers(us);CU={email,nome,username,phone,verifiedEmail:false,verifiedPhone:false,joinDate:Date.now(),photo:null};saveSession(CU);
+    setLoading('btnC','spC','arrC','btnCT',false);
+    enterApp();showToast('Conta criada! Bem-vindo, '+nome);
+  },1000);
+}
+function skipLogin(){CU=null;enterApp()}
+function enterApp(){
+  const ls=document.getElementById('loginScreen');ls.classList.add('out');setTimeout(()=>ls.style.display='none',350);
+  updateProfile();renderFeed();renderRole();initReveal();
+}
+function handleLogout(){clearSession();CU=null;const ls=document.getElementById('loginScreen');ls.style.display='flex';ls.classList.remove('out');updateProfile()}
+function updateProfile(){
+  const photos=gJ(K.ph)||{};
+  if(CU){
+    document.getElementById('heroGreet').textContent='Olá, '+CU.nome;
+    const ph=CU.photo||photos[CU.username];
+    const avEl=document.getElementById('profAv'),avTxt=document.getElementById('profAvTxt');
+    if(ph){avEl.style.background='none';avEl.innerHTML=`<img src="${ph}" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>`}
+    else{avEl.style.background='';avTxt.textContent=CU.nome.charAt(0).toUpperCase();avEl.innerHTML=`<span id="profAvTxt">${CU.nome.charAt(0).toUpperCase()}</span>`}
+    document.getElementById('profName').textContent=CU.nome;
+    document.getElementById('profUser').textContent='@'+(CU.username||'usuario');
+    document.getElementById('profRepTxt').textContent='Reputação: 42 pts';
+    document.getElementById('sPosts').textContent='7';
+    document.getElementById('sConf').textContent='23';
+    document.getElementById('sRep2').textContent='42';
+    // Badges
+    const bd=document.getElementById('profBadges');
+    let html='';
+    if(CU.verifiedEmail)html+=`<span class="vbadge vb-email"><svg class="ic" viewBox="0 0 24 24" width="10" height="10"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,4 12,13 22,4"/></svg>E-mail ✓</span>`;
+    if(CU.verifiedPhone)html+=`<span class="vbadge vb-phone"><svg class="ic" viewBox="0 0 24 24" width="10" height="10"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07"/></svg>Tel ✓</span>`;
+    const isNew=CU.joinDate&&(Date.now()-CU.joinDate)<7*24*60*60*1000;
+    if(isNew)html+=`<span class="vbadge vb-new">Novo usuário</span>`;
+    bd.innerHTML=html;
+    // verify status
+    document.getElementById('verifyEmailTxt').textContent=CU.verifiedEmail?'Verificado ✓':'Não verificado';
+    document.getElementById('verifyPhoneBtn').textContent=CU.verifiedPhone?'Verificado':'Verificar';
+    document.getElementById('verifyStatus').textContent=(CU.verifiedEmail&&CU.verifiedPhone)?'Totalmente verificado ✓':'Pendente';
+  } else {
+    document.getElementById('heroGreet').textContent='Olá, visitante';
+    document.getElementById('profAv').innerHTML=`<span id="profAvTxt">?</span>`;
+    document.getElementById('profAv').style.background='';
+    document.getElementById('profName').textContent='Visitante';
+    document.getElementById('profUser').textContent='@convidado';
+    document.getElementById('profRepTxt').textContent='Reputação: 0 pts';
+    ['sPosts','sConf','sRep2'].forEach(id=>document.getElementById(id).textContent='0');
+    document.getElementById('profBadges').innerHTML='';
+  }
+}
+
+/* ═══ NAVIGATION ═══ */
+const SCR={home:'screenHome',mapa:'screenMapa',seg:'screenSeg',role:'screenRole',perfil:'screenPerfil'};
+const TABS={home:'tabHome',mapa:'tabMapa',seg:'tabSeg',role:'tabRole'};
+function goScreen(k){
+  Object.values(SCR).forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active')});
+  Object.values(TABS).forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active')});
+  const s=document.getElementById(SCR[k]);if(s)s.classList.add('active');
+  const t=document.getElementById(TABS[k]);if(t)t.classList.add('active');
+  const f=document.getElementById('fabBtn'),sos=document.getElementById('sosBtn');
+  f.style.display=k==='perfil'?'none':'';sos.style.display=k==='perfil'?'none':'';
+  if(k==='mapa')initMap();
+  initReveal();
+}
+
+/* ═══ FEED ═══ */
+let feedF='todos';
+const BADGE={transit:['pb-t','Trânsito'],danger:['pb-d','Denúncia'],safe:['pb-s','Segurança'],role:['pb-r','Rolê']};
+function renderFeed(f){
+  f=f||feedF;
+  const posts=getPosts(),list=f==='todos'?posts:posts.filter(p=>p.type===f);
+  const c=document.getElementById('feedContainer');
+  if(!list.length){c.innerHTML='<div style="text-align:center;padding:3rem 2rem;color:var(--sub);font-size:.83rem">Nenhum post nessa categoria.</div>';return}
+  const photos=gJ(K.ph)||{};
+  c.innerHTML=list.map(p=>{
+    const[bc,bn]=BADGE[p.type]||['pb-r','Post'];
+    const ini=(p.user||'?').charAt(0).toUpperCase();
+    const ph=photos[p.user];
+    const avHtml=ph?`<img src="${ph}" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>`:`${ini}`;
+    const stars=Math.round(p.rep||4)*1;
+    const starsHtml=`<span class="rep-stars">${'<svg class="ic" viewBox="0 0 24 24" style="stroke:var(--yellow);fill:var(--yellow);stroke-width:1"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>'.repeat(Math.min(5,stars))}</span>`;
+    const newBadge=p.isNew?`<span class="new-badge"><svg viewBox="0 0 24 24" width="8" height="8" style="stroke:var(--red);fill:none;stroke-width:2;stroke-linecap:round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Novo</span>`:'';
+    const roleWarn=p.type==='role'?`<div class="role-warning"><div class="rw-icon"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="rw-text">Atenção: nunca pague adiantado. Combine em local público. Use SOS em emergências.</div></div>`:'';
+    return`<div class="post-card"><div class="post-head"><div class="post-av" onclick="openReportModal('post','@${p.user}')">${avHtml}</div><div class="post-meta"><div class="post-user" onclick="openReportModal('post','@${p.user}')">@${p.user}${newBadge}${starsHtml}</div><div class="post-loc">${p.loc}</div></div><span class="p-badge ${bc}">${bn}</span></div>${roleWarn}<div class="post-body"><p class="post-text">${p.text}</p></div><div class="post-time">${p.time}</div><div class="post-actions"><button class="p-act" onclick="likePost(${p.id},this)"><svg class="ic" viewBox="0 0 24 24" width="13" height="13"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span>${p.likes}</span></button><button class="p-act" onclick="showToast('Comentários em breve')"><svg class="ic" viewBox="0 0 24 24" width="13" height="13"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>${p.comments}</span></button><button class="p-act confirmed" onclick="confirmPost(${p.id},this)"><svg class="ic" viewBox="0 0 24 24" width="13" height="13"><polyline points="20,6 9,17 4,12"/></svg><span>${p.confirms}</span>&nbsp;Confirmar</button><button class="p-act" onclick="openReportModal('post','@${p.user}')"><svg class="ic" viewBox="0 0 24 24" width="13" height="13"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></button></div></div>`}).join('');
+}
+function filterFeed(f,btn){feedF=f;document.querySelectorAll('#screenHome .filter-row .ftab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderFeed(f)}
+function likePost(id,btn){const p=getPosts(),px=p.find(x=>x.id===id);if(!px)return;const on=btn.classList.toggle('liked');px.likes+=on?1:-1;savePosts(p);btn.querySelector('span').textContent=px.likes}
+function confirmPost(id,btn){const p=getPosts(),px=p.find(x=>x.id===id);if(!px)return;px.confirms++;savePosts(p);btn.querySelector('span').textContent=px.confirms;showToast('Ocorrência confirmada')}
+
+/* ═══ ROLÊ ═══ */
+const RTYPE={carona:'Carona',uber:'Dividir Uber',festa:'Festa',after:'After'};
+function renderRole(f){
+  f=f||'todos';
+  const list=f==='todos'?ROLES:ROLES.filter(r=>r.type===f);
+  const photos=gJ(K.ph)||{};
+  document.getElementById('roleContainer').innerHTML=list.map(r=>{
+    const ph=photos[r.user];
+    const avHtml=ph?`<img src="${ph}" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>`:`${r.user.charAt(0)}`;
+    const verBadge=r.verified?`<svg class="ic" viewBox="0 0 24 24" width="11" height="11" style="stroke:var(--blue);flex-shrink:0"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>`:'';
+    const repStars=`${'★'.repeat(Math.round(r.rep))}`;
+    const newLimit=!r.verified?`<div style="font-size:.68rem;color:var(--yellow);margin-bottom:.5rem;display:flex;align-items:center;gap:.3rem"><svg class="ic" viewBox="0 0 24 24" width="11" height="11" style="stroke:var(--yellow)"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Usuário não verificado — proceda com cautela</div>`:'';
+    return`<div class="role-card reveal">
+      <div class="role-author">
+        <div class="role-author-info">
+          <div class="role-av">${avHtml}</div>
+          <div><div class="role-user-name">@${r.user} ${verBadge}</div><div class="role-rep-tag">${repStars} ${r.rep.toFixed(1)}</div></div>
+        </div>
+        <button onclick="openReportModal('role','@${r.user}')" style="background:none;border:none;cursor:pointer;color:var(--sub);padding:.3rem" title="Denunciar"><svg class="ic" viewBox="0 0 24 24" width="14" height="14"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></button>
+      </div>
+      ${newLimit}
+      <span class="role-type-tag">${RTYPE[r.type]||r.type}</span>
+      <div class="role-title">${r.title}</div>
+      <div class="role-metas">
+        <span class="role-meta"><svg class="ic" viewBox="0 0 24 24" width="11" height="11"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${r.dest}</span>
+        <span class="role-meta"><svg class="ic" viewBox="0 0 24 24" width="11" height="11"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>${r.time}</span>
+        <span class="role-meta"><svg class="ic" viewBox="0 0 24 24" width="11" height="11"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>${r.vagas===999?'Aberto':r.vagas+' vaga'+(r.vagas>1?'s':'')}</span>
+      </div>
+      <div class="role-acts">
+        <button class="btn-wpp" onclick="openRoleSafety('${r.phone}','${r.title.replace(/'/g,"\\'")}')">
+          <svg class="ic" viewBox="0 0 24 24" width="13" height="13" style="stroke:#fff"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Chamar no WhatsApp
+        </button>
+        <button class="btn-int" onclick="showToast('Interesse registrado!')">Tenho interesse</button>
+      </div>
+    </div>`}).join('');
+  initReveal();
+}
+function filterRole(f,btn){document.querySelectorAll('#screenRole .filter-row .ftab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderRole(f)}
+
+/* ═══ ROLE SAFETY FLOW ═══ */
+function openRoleSafety(phone,title){
+  _wppPhone=phone;_wppTitle=title;
+  document.getElementById('roleSafetyModal').classList.add('open');
+}
+function roleSafetyContinue(){
+  closeModal('roleSafetyModal');
+  if(_wppPhone&&_wppTitle)window.open('https://wa.me/'+_wppPhone+'?text='+encodeURIComponent('Oi! Vi no MovMuriaé sobre "'+_wppTitle+'" e tenho interesse!'),'_blank');
+}
+
+/* ═══ MAP ═══ */
+function initMap(){
+  if(mapInst){mapInst.invalidateSize();return}
+  const c=[-21.1260,-42.3730];
+  mapInst=L.map('mapLeaflet',{center:c,zoom:14,zoomControl:false,attributionControl:false});
+  const dark=document.documentElement.getAttribute('data-theme')!=='light';
+  applyTile(dark);addPins();
+  // User dot
+  const userMarker=L.circleMarker(c,{radius:8,fillColor:'#007AFF',fillOpacity:1,color:'#fff',weight:2.5,opacity:1});
+  userMarker.addTo(mapInst);
+  userMarker.bindPopup('<div class="map-popup"><div class="mp-title">Você está aqui</div><div class="mp-sub">Muriaé, MG</div></div>',{closeButton:false});
+}
+function applyTile(dark){
+  if(mapInst)mapInst.eachLayer(l=>{if(l._url)mapInst.removeLayer(l)});
+  const url=dark?'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png':'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+  if(mapInst)L.tileLayer(url,{maxZoom:19,subdomains:'abcd'}).addTo(mapInst);
+}
+function mkPin(t){
+  const c={r:'#FF3B30',y:'#FFCC00',g:'#34C759'}[t]||'#FF3B30';
+  const ic={r:'⚠',y:'!',g:'✓'}[t]||'!';
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40"><defs><filter id="ds"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.35"/></filter></defs><path d="M16 0C7.16 0 0 7.16 0 16c0 10.56 16 24 16 24s16-13.44 16-24C32 7.16 24.84 0 16 0z" fill="${c}" filter="url(#ds)"/><circle cx="16" cy="15" r="7" fill="white" opacity="0.92"/><text x="16" y="19" text-anchor="middle" font-size="9" font-family="Arial" font-weight="bold" fill="${c}">${ic}</text></svg>`;
+  return L.divIcon({html:svg,className:'',iconSize:[32,40],iconAnchor:[16,40],popupAnchor:[0,-40]});
+}
+function addPins(){
+  const bCols={Perigo:'rl-a',Alerta:'rl-m',Seguro:'rl-b'};
+  MAP_PINS.forEach(p=>{
+    const m=L.marker([p.lat,p.lng],{icon:mkPin(p.t)});
+    m.bindPopup(`<div class="map-popup"><div class="mp-title">${p.title}</div><div class="mp-sub">${p.sub}</div><span class="mp-badge ${bCols[p.badge]||'rl-m'}">${p.badge}</span></div>`,{closeButton:false,maxWidth:220});
+    m.addTo(mapInst);mL[p.t].push(m);
+  });
+}
+function toggleMF(btn,t){const cls={r:'on-r',y:'on-y',g:'on-g'}[t];const on=btn.classList.toggle(cls);mL[t].forEach(m=>on?m.addTo(mapInst):mapInst.removeLayer(m))}
+function refreshMap(){if(mapInst)mapInst.invalidateSize();showToast('Mapa atualizado — Muriaé, MG')}
+
+/* ═══ NEW POST ═══ */
+function selPT(t){
+  _pt=t;['tT','tD','tS','tR'].forEach(id=>document.getElementById(id).classList.remove('sel'));
+  const m={transit:'tT',danger:'tD',safe:'tS',role:'tR'};if(m[t])document.getElementById(m[t]).classList.add('sel');
+  document.getElementById('safetyChecklist').style.display=t==='role'?'block':'none';
+}
+function openNewPost(t){
+  if(!CU){showToast('Faça login para publicar');return}
+  const isNew=CU.joinDate&&(Date.now()-CU.joinDate)<7*24*60*60*1000;
+  if(isNew&&(t==='role')){showToast('Usuários novos não podem publicar no Rolê por 7 dias');return}
+  selPT(t||'transit');
+  document.getElementById('newPostModal').classList.add('open');
+  document.getElementById('postTxt').value='';document.getElementById('postLoc').value='';
+}
+function toggleCheck(el){el.querySelector('.sc-check').classList.toggle('checked')}
+function submitPost(){
+  const txt=document.getElementById('postTxt').value.trim(),loc=document.getElementById('postLoc').value.trim();
+  if(!txt){showToast('Escreva algo antes de publicar');return}
+  if(_pt==='role'){
+    const checks=document.querySelectorAll('#safetyChecklist .sc-check');
+    const allChecked=[...checks].every(c=>c.classList.contains('checked'));
+    if(!allChecked){showToast('Confirme todos os itens de segurança');return}
+  }
+  const posts=getPosts();
+  posts.unshift({id:Date.now(),type:_pt,user:CU.username||CU.nome,rep:3.5,loc:loc||'Muriaé',text:txt,time:'agora mesmo',likes:0,comments:0,confirms:0,isNew:true});
+  savePosts(posts);closeModal('newPostModal');goScreen('home');renderFeed();showToast('Publicado com sucesso');
+}
+
+/* ═══ SETTINGS ═══ */
+function openNotifModal(){document.getElementById('notifModal').classList.add('open','center')}
+function openNotifSettings(){document.getElementById('notifModal').classList.add('open','center')}
+function saveNotifSettings(){
+  const at=document.getElementById('ntAlerta').checked,sg=document.getElementById('ntSeg').checked;
+  document.getElementById('notifStatus').textContent=(at||sg)?'Alertas ativos':'Desativadas';
+  closeModal('notifModal');showToast('Notificações salvas');
+}
+function openLocSettings(){document.getElementById('locModal').classList.add('open','center')}
+function saveLocSettings(){
+  const mp=document.getElementById('lcMap').checked;
+  document.getElementById('locStatus').textContent=mp?'Localização ativa':'Localização desativada';
+  closeModal('locModal');showToast('Configurações de localização salvas');
+}
+function openPrivacy(){document.getElementById('privacyModal').classList.add('open','center')}
+function openVerification(){if(!CU){showToast('Faça login para verificar');return}document.getElementById('verifyModal').classList.add('open','center')}
+function verifyEmail(){
+  if(!CU)return;
+  setTimeout(()=>{CU.verifiedEmail=true;saveSession(CU);const us=getUsers();const u=us.find(x=>x.email===CU.email);if(u){u.verifiedEmail=true;saveUsers(us)}document.getElementById('verifyEmailTxt').textContent='Verificado ✓';document.getElementById('verifyEmailBtn').textContent='Verificado';document.getElementById('verifyEmailBtn').style.background='var(--green)';updateProfile();showToast('E-mail verificado com sucesso!')},500);
+}
+function verifyPhone(){
+  if(!CU)return;
+  setTimeout(()=>{CU.verifiedPhone=true;saveSession(CU);const us=getUsers();const u=us.find(x=>x.email===CU.email);if(u){u.verifiedPhone=true;saveUsers(us)}document.getElementById('verifyPhoneTxt').textContent='Verificado ✓';document.getElementById('verifyPhoneBtn').textContent='Verificado';document.getElementById('verifyPhoneBtn').style.background='var(--green)';document.getElementById('verifyStatus').textContent=(CU.verifiedEmail?'Totalmente verificado ✓':'Parcialmente verificado');updateProfile();showToast('Telefone verificado com sucesso!')},500);
+}
+
+/* ═══ PHOTO ═══ */
+function openPhotoModal(){if(!CU){showToast('Faça login para editar perfil');return}document.getElementById('photoModal').classList.add('open','center')}
+function triggerPhotoUpload(){document.getElementById('photoInput').click()}
+function handlePhotoUpload(e){
+  const f=e.target.files[0];if(!f)return;
+  if(f.size>5*1024*1024){showToast('Imagem muito grande — máx 5MB');return}
+  const r=new FileReader();
+  r.onload=ev=>{
+    const data=ev.target.result;
+    const ph=gJ(K.ph)||{};ph[CU.username]=data;sJ(K.ph,ph);
+    CU.photo=data;saveSession(CU);
+    closeModal('photoModal');updateProfile();showToast('Foto atualizada!');renderFeed();renderRole();
+  };r.readAsDataURL(f);
+}
+function useAvatar(){closeModal('photoModal');showToast('Avatar atualizado!')}
+
+/* ═══ REPORT ═══ */
+function openReportModal(type,target){
+  if(!CU){showToast('Faça login para denunciar');return}
+  _selectedReport=null;document.getElementById('reportTarget').textContent='Denunciar '+target+' — selecione o motivo:';
+  document.querySelectorAll('.report-option').forEach(o=>o.classList.remove('selected'));
+  document.getElementById('btnReport').disabled=true;
+  document.getElementById('reportModal').classList.add('open','center');
+}
+function selectReport(el,type){_selectedReport=type;document.querySelectorAll('.report-option').forEach(o=>o.classList.remove('selected'));el.classList.add('selected');document.getElementById('btnReport').disabled=false}
+function submitReport(){if(!_selectedReport)return;closeModal('reportModal');showToast('Denúncia enviada — obrigado por manter a comunidade segura')}
+
+/* ═══ SOS ═══ */
+function openSOS(){document.getElementById('sosModal').classList.add('open','center')}
+function sosCall190(){window.location.href='tel:190';closeModal('sosModal')}
+function sosSamu(){window.location.href='tel:192';closeModal('sosModal')}
+function sosLocation(){
+  closeModal('sosModal');
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(p=>{
+      const url=`https://wa.me/?text=${encodeURIComponent('🆘 EMERGÊNCIA — Estou em:\nhttps://maps.google.com/?q='+p.coords.latitude+','+p.coords.longitude)}`;
+      window.open(url,'_blank');
+      showToast('Localização pronta para compartilhar');
+    },()=>showToast('Ative a localização do dispositivo'));
+  }else showToast('Localização não disponível');
+}
+function sosAlert(){closeModal('sosModal');openNewPost('danger');showToast('Crie um alerta de segurança')}
+
+/* ═══ DARK MODE ═══ */
+function toggleDark(){const dark=document.getElementById('darkTgl').checked;document.documentElement.setAttribute('data-theme',dark?'dark':'light');if(mapInst)applyTile(dark)}
+
+/* ═══ MODAL HELPERS ═══ */
+function closeModal(id){document.getElementById(id).classList.remove('open','center')}
+function closeBg(e,id){if(e.target===document.getElementById(id))closeModal(id)}
+
+/* ═══ TOAST ═══ */
+let _tt;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2800)}
+
+/* ═══ REVEAL ═══ */
+function initReveal(){const obs=new IntersectionObserver(e=>{e.forEach((x,i)=>{if(x.isIntersecting){setTimeout(()=>x.target.classList.add('visible'),55*(i%6));obs.unobserve(x.target)}})},{threshold:.08});document.querySelectorAll('.reveal:not(.visible)').forEach(el=>obs.observe(el))}
+
+/* ═══ INIT ═══ */
+(function(){
+  const light=window.matchMedia('(prefers-color-scheme: light)').matches;
+  if(light){document.documentElement.setAttribute('data-theme','light');document.getElementById('darkTgl').checked=false}
+  const s=getSession();if(s){CU=s;enterApp()}
+  if(!gJ(K.p))savePosts(SEED);
+  selPT('transit');
+})();
+</script>
+</body>
+</html>
